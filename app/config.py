@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import os
 from dotenv import load_dotenv
 
-from app.gui import prompt_api_credentials
+from app.gui import prompt_runtime_inputs
 
 
 load_dotenv()
@@ -31,17 +31,21 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    app_key = os.getenv("KIWOOM_APP_KEY", "")
-    app_secret = os.getenv("KIWOOM_APP_SECRET", "")
+    env = os.getenv("KIWOOM_ENV", "").strip().lower()
+    app_key = os.getenv("KIWOOM_APP_KEY", "").strip()
+    app_secret = os.getenv("KIWOOM_APP_SECRET", "").strip()
 
-    if not app_key or not app_secret:
-        app_key, app_secret = prompt_api_credentials()
+    if env not in {"mock", "live"} or not app_key or not app_secret:
+        gui_env, gui_key, gui_secret = prompt_runtime_inputs()
+        env = env if env in {"mock", "live"} else gui_env
+        app_key = app_key or gui_key
+        app_secret = app_secret or gui_secret
 
     return Settings(
         app_key=app_key,
         app_secret=app_secret,
         account_no=os.getenv("KIWOOM_ACCOUNT_NO", ""),
-        env=os.getenv("KIWOOM_ENV", "mock"),
+        env=env,
         base_url_mock=os.getenv("KIWOOM_BASE_URL_MOCK", "https://openapi.kiwoom.com"),
         base_url_live=os.getenv("KIWOOM_BASE_URL_LIVE", "https://openapi.kiwoom.com"),
         target_symbol=os.getenv("TARGET_SYMBOL", "005930"),
